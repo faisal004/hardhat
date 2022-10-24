@@ -18,19 +18,51 @@ contract LW3Punks is ERC721Enumerable, Ownable {
         _;
     }
 
-    constructor (string memory baseURI) ERC721("LW3Punks","LW3P"){
-        _baseTokenURI=baseURI;
+    constructor(string memory baseURI) ERC721("LW3Punks", "LW3P") {
+        _baseTokenURI = baseURI;
     }
 
-    function mint() public payable onlyWhenNotPaused{
-        require(tokenIds<maxTokenIds,"Exceeds max LW3Punk Supply");
-        require(msg.value>=_price ,"Ehters sent are not correct");
-        tokenIds+=1;
-        _safeMint(msg.sender,tokenIds);
+    function mint() public payable onlyWhenNotPaused {
+        require(tokenIds < maxTokenIds, "Exceeds max LW3Punk Supply");
+        require(msg.value >= _price, "Ehters sent are not correct");
+        tokenIds += 1;
+        _safeMint(msg.sender, tokenIds);
     }
 
-    function _baseURI() internal view virtual override returns (string memory){
+    function _baseURI() internal view virtual override returns (string memory) {
         return _baseTokenURI;
     }
-    
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
+        string memory baseURI = _baseURI();
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, tokenId.toString(), ".json"))
+                : "";
+    }
+
+    function setPaused(bool val) public onlyOwner {
+        _paused = val;
+    }
+
+    function withdraw() public onlyOwner {
+        address _owner = owner();
+        uint256 amount = address(this).balance;
+        (bool sent, ) = _owner.call{value: amount}("");
+        require(sent, "Failed to send Ether");
+    }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }
